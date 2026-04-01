@@ -1,0 +1,10 @@
+chunks_dir: "chunks"
+results_dir: "results"
+
+model: "xgb_model.pkl"
+scaler: "scaler.pkl"
+features: "features.pkl"
+medians: "feature_medians.csv"
+
+high_active_threshold: 0.85
+high_inactive_threshold: 0.15

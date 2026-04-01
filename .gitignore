@@ -1,0 +1,16 @@
+# Logs
+logs/
+
+# Snakemake
+.snakemake/
+
+# Python
+__pycache__/
+*.pyc
+
+# Conda
+.env/
+*.yaml.lock
+
+# OS
+.DS_Store
