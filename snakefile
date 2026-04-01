@@ -13,13 +13,12 @@ CHUNKS = [
 print(f"[SNAKEMAKE] Found {len(CHUNKS)} chunks")
 
 # =========================
-# FINAL TARGET
+# FINAL TARGET (ONLY ACTIVES)
 # =========================
 
 rule all:
     input:
-        "results/ALL_high_active.csv",
-        "results/ALL_high_inactive.csv"
+        "results/ALL_high_active.csv"
 
 
 # =========================
@@ -44,14 +43,14 @@ rule process_chunk:
     input:
         "chunks/{chunk}.txt"
     output:
-        all="results/{chunk}_results.csv",
-        active="results/{chunk}_high_active.csv",
-        inactive="results/{chunk}_high_inactive.csv"
+        all="results/all/{chunk}.csv",
+        active="results/active/{chunk}.csv",
+        inactive="results/inactive/{chunk}.csv"
     conda:
         "workflow/envs/full_pipeline.yaml"
     shell:
         """
-        mkdir -p results logs
+        mkdir -p results/all results/active results/inactive logs
         python workflow/scripts/worker.py {input} \
             {output.all} \
             {output.active} \
@@ -60,17 +59,15 @@ rule process_chunk:
 
 
 # =========================
-# STEP 3 — MERGE RESULTS
+# STEP 3 — MERGE ONLY ACTIVES
 # =========================
 
 rule merge_predictions:
     input:
-        expand("results/{chunk}_high_active.csv", chunk=CHUNKS),
-        expand("results/{chunk}_high_inactive.csv", chunk=CHUNKS)
+        expand("results/active/{chunk}.csv", chunk=CHUNKS)
     output:
-        active="results/ALL_high_active.csv",
-        inactive="results/ALL_high_inactive.csv"
+        "results/ALL_high_active.csv"
     shell:
         """
-        python workflow/scripts/merge_predictions.py
+        python workflow/scripts/merge.py
         """

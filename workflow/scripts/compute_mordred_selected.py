@@ -14,7 +14,7 @@ import pickle
 import joblib
 
 # =========================
-# GLOBAL CACHE (IMPORTANT)
+# GLOBAL CACHE
 # =========================
 
 CALC = None
@@ -25,7 +25,7 @@ def compute_descriptors(df, feature_file):
     global CALC, FEATURE_LIST
 
     # =========================
-    # LOAD FEATURE LIST (ONCE)
+    # INITIALIZE ONCE
     # =========================
 
     if FEATURE_LIST is None:
@@ -35,10 +35,11 @@ def compute_descriptors(df, feature_file):
             with open(feature_file, "rb") as f:
                 FEATURE_LIST = list(pickle.load(f))
 
-        # Build descriptor mapping ONCE
-        all_desc = {str(d): d for d in descriptors}
+        # 👉 CORRECT WAY
+        calc_full = Calculator(descriptors, ignore_3D=True)
+
         selected_descriptors = [
-            all_desc[f] for f in FEATURE_LIST if f in all_desc
+            d for d in calc_full.descriptors if str(d) in FEATURE_LIST
         ]
 
         if not selected_descriptors:
@@ -46,14 +47,13 @@ def compute_descriptors(df, feature_file):
 
         CALC = Calculator(selected_descriptors, ignore_3D=True)
 
-        print(f"[MORDRED] Initialized with {len(FEATURE_LIST)} descriptors")
+        print(f"[MORDRED] Initialized with {len(selected_descriptors)} descriptors")
 
     # =========================
     # COMPUTE DESCRIPTORS
     # =========================
 
     results = []
-
     smiles_list = df["canonical_smiles"].values
 
     for smiles in smiles_list:

@@ -1,54 +1,17 @@
-from pathlib import Path
-import glob
-import logging
-from logging.handlers import RotatingFileHandler
-import sys
-
-# =========================
-# LOGGING SETUP
-# =========================
-
-log_file = Path("logs/merge.log")
-log_file.parent.mkdir(parents=True, exist_ok=True)
-
-logger = logging.getLogger("merge")
-logger.setLevel(logging.INFO)
-
-# prevent duplicate handlers
-if logger.hasHandlers():
-    logger.handlers.clear()
-
-console_handler = logging.StreamHandler(sys.stdout)
-file_handler = RotatingFileHandler(log_file, maxBytes=5_000_000, backupCount=2)
-
-formatter = logging.Formatter("[%(asctime)s] %(levelname)s - %(message)s")
-console_handler.setFormatter(formatter)
-file_handler.setFormatter(formatter)
-
-logger.addHandler(console_handler)
-logger.addHandler(file_handler)
-
-
-# =========================
-# OUTPUT FILES
-# =========================
-
-output_active = Path("results/ALL_high_active.csv")
-output_inactive = Path("results/ALL_high_inactive.csv")
-
-output_active.parent.mkdir(parents=True, exist_ok=True)
-output_inactive.parent.mkdir(parents=True, exist_ok=True)
-
-
 # =========================
 # INPUT FILES
 # =========================
 
-active_files = sorted(glob.glob("results/*_high_active.csv"))
-inactive_files = sorted(glob.glob("results/*_high_inactive.csv"))
+active_files = sorted(
+    glob.glob("results/active/*.csv"),
+    key=lambda x: int(Path(x).stem.split("_")[-1])
+)
+
+if not active_files:
+    logger.warning("No active files found. Exiting merge.")
+    sys.exit(0)
 
 logger.info(f"Found {len(active_files)} active files")
-logger.info(f"Found {len(inactive_files)} inactive files")
 
 
 # =========================
@@ -56,6 +19,9 @@ logger.info(f"Found {len(inactive_files)} inactive files")
 # =========================
 
 def merge_files(file_list, output_file):
+
+    if output_file.exists():
+        logger.warning(f"{output_file} already exists — overwriting")
 
     header_written = False
     total_rows = 0
@@ -68,31 +34,26 @@ def merge_files(file_list, output_file):
             if not path.exists() or path.stat().st_size == 0:
                 continue
 
-            with open(path, "r") as infile:
-                lines = infile.readlines()
+            logger.info(f"Merging {path.name}")
 
-                if not lines:
-                    continue
+            try:
+                with open(path, "r") as infile:
 
-                if not header_written:
-                    out.write(lines[0])
-                    header_written = True
+                    for i, line in enumerate(infile):
 
-                data_lines = lines[1:]
-                out.writelines(data_lines)
+                        if i == 0:
+                            if not header_written:
+                                out.write(line)
+                                header_written = True
+                            continue
 
-                total_rows += len(data_lines)
+                        out.write(line)
+                        total_rows += 1
+
+                        if total_rows % 1_000_000 == 0:
+                            logger.info(f"{total_rows:,} rows merged...")
+
+            except Exception as e:
+                logger.warning(f"Skipping {path.name}: {e}")
 
     logger.info(f"{output_file.name}: {total_rows} rows")
-
-
-# =========================
-# RUN MERGE
-# =========================
-
-logger.info("Starting merge...")
-
-merge_files(active_files, output_active)
-merge_files(inactive_files, output_inactive)
-
-logger.info("Merge completed successfully")
