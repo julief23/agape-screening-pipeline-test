@@ -1,5 +1,6 @@
 import glob
 import os
+from pathlib import Path
 
 # =========================
 # AUTO-DETECT CHUNKS
@@ -61,13 +62,10 @@ rule process_chunk:
 # =========================
 # STEP 3 — MERGE ONLY ACTIVES
 # =========================
-
 rule merge_predictions:
     input:
-        expand("results/active/{chunk}.csv", chunk=CHUNKS)
+        lambda wildcards: sorted(glob.glob("results/active/*.csv"))
     output:
         "results/ALL_high_active.csv"
-    shell:
-        """
-        python workflow/scripts/merge.py
-        """
+    script:
+        "workflow/scripts/merge_predictions.py"

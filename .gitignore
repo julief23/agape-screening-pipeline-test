@@ -1,5 +1,8 @@
+# Generated data
 data/
 chunks/
+results/
+
 # Logs
 logs/
 
@@ -10,9 +13,9 @@ logs/
 __pycache__/
 *.pyc
 
-# Conda
+# Conda / environments
 .env/
 *.yaml.lock
 
-# OS
+# OS files
 .DS_Store
