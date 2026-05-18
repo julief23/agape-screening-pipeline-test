@@ -3,10 +3,9 @@ data/
 chunks/
 results/
 draw/
-
+compare.py
 random_draw.py
 duplicate_edta.py
-compare.py
 
 # Logs
 logs/
