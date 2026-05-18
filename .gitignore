@@ -3,6 +3,7 @@ data/
 chunks/
 results/
 draw/
+
 random_draw.py
 duplicate_edta.py
 compare.py
